@@ -86,6 +86,58 @@ function normalizePayload(payload) {
   };
 }
 
+const extractionPrompt = "请识别这张电梯装箱明细表照片，提取第一页送货单需要填写的信息。收货单位位置请作为项目名 projectName 提取。只输出符合 schema 的 JSON。尺寸统一为 2850*550*960 这种格式；看不清的字段留空；包装状态不用提取；每一行箱子都保留。";
+
+const extractionSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    elevatorSpec: { type: "string" },
+    projectName: { type: "string" },
+    address: { type: "string" },
+    factoryNumber: { type: "string" },
+    shipDate: { type: "string" },
+    contractNumber: { type: "string" },
+    contactPhone: { type: "string" },
+    recipient: { type: "string" },
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          actualBoxNo: { type: "string" },
+          boxNo: { type: "number" },
+          chineseName: { type: "string" },
+          englishName: { type: "string" },
+          quantity: { type: "number" },
+          unit: { type: "string" },
+          size: { type: "string" },
+          weight: { type: "string" },
+          note: { type: "string" },
+        },
+        required: ["actualBoxNo", "boxNo", "chineseName", "englishName", "quantity", "unit", "size", "weight", "note"],
+      },
+    },
+  },
+  required: ["elevatorSpec", "projectName", "address", "factoryNumber", "shipDate", "contractNumber", "contactPhone", "recipient", "items"],
+};
+
+function geminiSchema(schema) {
+  if (Array.isArray(schema)) return schema.map(geminiSchema);
+  if (!schema || typeof schema !== "object") return schema;
+  const converted = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === "additionalProperties") continue;
+    if (key === "type" && typeof value === "string") {
+      converted[key] = value.toUpperCase();
+    } else {
+      converted[key] = geminiSchema(value);
+    }
+  }
+  return converted;
+}
+
 async function writeBase64File(base64, ext) {
   const id = crypto.randomUUID();
   const filePath = path.join(tmpDir, `${id}${ext}`);
@@ -107,47 +159,54 @@ async function fillWorkbook(templatePath, data) {
   return outPath;
 }
 
+async function extractWithGemini(imageBase64, mimeType) {
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: extractionPrompt },
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: imageBase64,
+              },
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        response_mime_type: "application/json",
+        response_schema: geminiSchema(extractionSchema),
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Gemini 识别失败：${response.status} ${text.slice(0, 500)}`);
+  }
+  const result = await response.json();
+  const text = result.candidates?.[0]?.content?.parts?.find((part) => part.text)?.text;
+  if (!text) throw new Error("Gemini 识别结果为空。");
+  return normalizePayload(JSON.parse(text));
+}
+
 async function extractWithOpenAI(imageBase64, mimeType) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("未设置 OPENAI_API_KEY。可以先手工填写/粘贴 JSON，再导出 Excel。");
+    throw new Error("未设置 GOOGLE_API_KEY 或 OPENAI_API_KEY。可以先手工填写/粘贴 JSON，再导出 Excel。");
   }
 
   const model = process.env.OPENAI_MODEL || "gpt-4.1-mini";
-  const schema = {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-      elevatorSpec: { type: "string" },
-      projectName: { type: "string" },
-      address: { type: "string" },
-      factoryNumber: { type: "string" },
-      shipDate: { type: "string" },
-      contractNumber: { type: "string" },
-      contactPhone: { type: "string" },
-      recipient: { type: "string" },
-      items: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            actualBoxNo: { type: "string" },
-            boxNo: { type: "number" },
-            chineseName: { type: "string" },
-            englishName: { type: "string" },
-            quantity: { type: "number" },
-            unit: { type: "string" },
-            size: { type: "string" },
-            weight: { type: "string" },
-            note: { type: "string" }
-          },
-          required: ["actualBoxNo", "boxNo", "chineseName", "englishName", "quantity", "unit", "size", "weight", "note"]
-        }
-      }
-    },
-    required: ["elevatorSpec", "projectName", "address", "factoryNumber", "shipDate", "contractNumber", "contactPhone", "recipient", "items"]
-  };
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -163,7 +222,7 @@ async function extractWithOpenAI(imageBase64, mimeType) {
           content: [
             {
               type: "input_text",
-              text: "请识别这张电梯装箱明细表照片，提取第一页送货单需要填写的信息。收货单位位置请作为项目名 projectName 提取。只输出符合 schema 的 JSON。尺寸统一为 2850*550*960 这种格式；看不清的字段留空；包装状态不用提取；每一行箱子都保留。"
+              text: extractionPrompt
             },
             {
               type: "input_image",
@@ -177,7 +236,7 @@ async function extractWithOpenAI(imageBase64, mimeType) {
           type: "json_schema",
           name: "shipping_mark_data",
           strict: true,
-          schema
+          schema: extractionSchema,
         }
       }
     })
@@ -191,6 +250,12 @@ async function extractWithOpenAI(imageBase64, mimeType) {
   const text = result.output_text || result.output?.flatMap((item) => item.content || []).find((part) => part.type === "output_text")?.text;
   if (!text) throw new Error("识别结果为空。");
   return normalizePayload(JSON.parse(text));
+}
+
+async function extractImageData(imageBase64, mimeType) {
+  const geminiData = await extractWithGemini(imageBase64, mimeType);
+  if (geminiData) return geminiData;
+  return extractWithOpenAI(imageBase64, mimeType);
 }
 
 async function serveStatic(req, res) {
@@ -219,7 +284,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/extract") {
       const body = await readJson(req);
-      const data = await extractWithOpenAI(body.imageBase64, body.mimeType || "image/jpeg");
+      const data = await extractImageData(body.imageBase64, body.mimeType || "image/jpeg");
       return sendJson(res, 200, { data });
     }
 

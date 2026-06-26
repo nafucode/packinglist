@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 上传装箱明细图片，调用 OpenAI 视觉模型识别项目名、箱号、箱名、尺寸等信息。
+- 上传装箱明细图片，调用 Gemini 或 OpenAI 视觉模型识别项目名、箱号、箱名、尺寸等信息。
 - 在网页里人工校对识别结果。
 - 只填写 Excel 模版第一页 `FJPN送货单`。
 - 自动按尺寸计算单箱 CBM 和总 CBM。
@@ -26,12 +26,16 @@ http://127.0.0.1:4173
 
 ## AI 识别
 
-图片识别需要设置 `OPENAI_API_KEY`：
+图片识别优先使用 Gemini，设置 `GOOGLE_API_KEY` 即可：
 
 ```bash
-export OPENAI_API_KEY="你的 key"
+export GOOGLE_API_KEY="你的 Gemini key"
 npm run dev
 ```
+
+也可以设置 `GEMINI_MODEL` 切换模型，默认是 `gemini-2.0-flash-lite`。
+
+如果没有 `GOOGLE_API_KEY`，工具会回退使用 `OPENAI_API_KEY`。
 
 未设置 key 时，也可以在网页里手工填写或粘贴 JSON，然后导出 Excel。
 
@@ -48,10 +52,17 @@ npm run dev
 
 这个项目已经包含 Vercel 所需的 `api/*.py` serverless 接口和 `vercel.json`。
 
-部署到 Vercel 后需要在项目环境变量里设置：
+部署到 Vercel 后建议在项目环境变量里设置：
 
 ```text
-OPENAI_API_KEY=你的 key
+GOOGLE_API_KEY=你的 Gemini key
+```
+
+可选：
+
+```text
+GEMINI_MODEL=gemini-2.0-flash-lite
+OPENAI_API_KEY=你的 OpenAI key（仅作为备用）
 ```
 
 线上环境没有本机 `Downloads` 里的默认 Excel 模版，所以导出前需要在页面上传 Excel 模版。

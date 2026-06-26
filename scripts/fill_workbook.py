@@ -7,6 +7,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Alignment
+from openpyxl.worksheet.properties import PageSetupProperties
 
 
 LABEL_SHEET_PATTERN = re.compile(r"^(\d+)#\(\d+\)$")
@@ -67,6 +68,20 @@ def fit_english_label(sheet, english_name: str) -> None:
     )
 
 
+def compact_label_sheet_for_print(sheet) -> None:
+    sheet.row_dimensions[22].height = 32
+    sheet.row_dimensions[23].height = 34
+    sheet.row_dimensions[24].height = 36
+    sheet.print_area = "A1:I24"
+    sheet.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
+    sheet.page_setup.fitToWidth = 1
+    sheet.page_setup.fitToHeight = 1
+    sheet.page_margins.left = 0.15
+    sheet.page_margins.right = 0.15
+    sheet.page_margins.top = 0.2
+    sheet.page_margins.bottom = 0.2
+
+
 def repair_label_formulas(workbook, items: list[dict]) -> None:
     keep_count = len(items)
     for index in range(1, keep_count + 1):
@@ -92,6 +107,7 @@ def repair_label_formulas(workbook, items: list[dict]) -> None:
         sheet["B22"] = blank_ref("C48")
         sheet["B23"] = blank_ref("C47")
         sheet["B24"] = blank_ref("C46")
+        compact_label_sheet_for_print(sheet)
 
 
 def fill_workbook(template_path: Path, output_path: Path, data: dict) -> None:

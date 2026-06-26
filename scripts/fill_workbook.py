@@ -6,6 +6,7 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 from openpyxl.cell.cell import MergedCell
+from openpyxl.styles import Alignment
 
 
 LABEL_SHEET_PATTERN = re.compile(r"^(\d+)#\(\d+\)$")
@@ -38,7 +39,36 @@ def prune_label_sheets(workbook, keep_count: int) -> None:
             del workbook[sheet_name]
 
 
-def repair_label_formulas(workbook, keep_count: int) -> None:
+def english_label_font_size(text: str) -> int:
+    length = len(text or "")
+    if length <= 16:
+        return 36
+    if length <= 22:
+        return 30
+    if length <= 30:
+        return 24
+    if length <= 40:
+        return 20
+    if length <= 52:
+        return 17
+    return 15
+
+
+def fit_english_label(sheet, english_name: str) -> None:
+    cell = sheet["F7"]
+    font = copy(cell.font)
+    font.sz = english_label_font_size(english_name)
+    cell.font = font
+    cell.alignment = Alignment(
+        horizontal="center",
+        vertical="center",
+        shrink_to_fit=True,
+        wrap_text=False,
+    )
+
+
+def repair_label_formulas(workbook, items: list[dict]) -> None:
+    keep_count = len(items)
     for index in range(1, keep_count + 1):
         row = index + 6
         sheet_name = f"{index}#({row})"
@@ -49,6 +79,7 @@ def repair_label_formulas(workbook, keep_count: int) -> None:
         sheet["D5"] = blank_ref("C3")
         sheet["D7"] = blank_ref("C4")
         sheet["F7"] = blank_ref(f"D{row}")
+        fit_english_label(sheet, items[index - 1].get("englishName", ""))
         sheet["D9"] = blank_ref("C2")
         sheet["F10"] = blank_ref(f"C{row}")
         sheet["D11"] = blank_ref("I3")
@@ -116,7 +147,7 @@ def fill_workbook(template_path: Path, output_path: Path, data: dict) -> None:
     sheet["H41"] = "=SUM(H7:H39)"
     sheet["H41"].number_format = "0.000"
 
-    repair_label_formulas(workbook, len(items))
+    repair_label_formulas(workbook, items)
     workbook.save(output_path)
 
 

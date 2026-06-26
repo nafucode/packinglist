@@ -70,7 +70,7 @@ def fill_workbook(template_path: Path, output_path: Path, data: dict) -> None:
 
     sheet = workbook["FJPN送货单"]
     sheet["C2"] = data.get("elevatorSpec", "")
-    sheet["C3"] = data.get("consignee", "")
+    sheet["C3"] = data.get("projectName") or data.get("consignee", "")
     sheet["C4"] = data.get("address", "")
     sheet["C5"] = data.get("factoryNumber", "")
     sheet["I2"] = data.get("shipDate", "")

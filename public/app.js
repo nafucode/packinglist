@@ -1,6 +1,6 @@
 const fields = [
   "elevatorSpec",
-  "consignee",
+  "projectName",
   "address",
   "factoryNumber",
   "shipDate",
@@ -11,7 +11,7 @@ const fields = [
 
 const sampleData = {
   elevatorSpec: "TKJ 800/1.0-VF",
-  consignee: "苏州欣富机机电有限公司",
+  projectName: "苏州欣富机机电有限公司",
   address: "",
   factoryNumber: "XFJ2026-2016",
   shipDate: "",
@@ -113,10 +113,14 @@ function renderJson() {
 }
 
 function applyData(data) {
+  const incoming = {
+    ...data,
+    projectName: data.projectName || data.consignee || "",
+  };
   state.data = {
     ...structuredClone(sampleData),
-    ...data,
-    items: Array.isArray(data.items) ? data.items : [],
+    ...incoming,
+    items: Array.isArray(incoming.items) ? incoming.items : [],
   };
   fields.forEach((key) => {
     document.getElementById(key).value = state.data[key] || "";

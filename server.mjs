@@ -61,9 +61,11 @@ function cleanDimension(value) {
 function normalizePayload(payload) {
   const data = payload || {};
   const items = Array.isArray(data.items) ? data.items : [];
+  const projectName = String(data.projectName || data.consignee || "").trim();
   return {
     elevatorSpec: String(data.elevatorSpec || "").trim(),
-    consignee: String(data.consignee || "").trim(),
+    projectName,
+    consignee: projectName,
     address: String(data.address || "").trim(),
     factoryNumber: String(data.factoryNumber || "").trim(),
     shipDate: String(data.shipDate || "").trim(),
@@ -117,7 +119,7 @@ async function extractWithOpenAI(imageBase64, mimeType) {
     additionalProperties: false,
     properties: {
       elevatorSpec: { type: "string" },
-      consignee: { type: "string" },
+      projectName: { type: "string" },
       address: { type: "string" },
       factoryNumber: { type: "string" },
       shipDate: { type: "string" },
@@ -144,7 +146,7 @@ async function extractWithOpenAI(imageBase64, mimeType) {
         }
       }
     },
-    required: ["elevatorSpec", "consignee", "address", "factoryNumber", "shipDate", "contractNumber", "contactPhone", "recipient", "items"]
+    required: ["elevatorSpec", "projectName", "address", "factoryNumber", "shipDate", "contractNumber", "contactPhone", "recipient", "items"]
   };
 
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -161,7 +163,7 @@ async function extractWithOpenAI(imageBase64, mimeType) {
           content: [
             {
               type: "input_text",
-              text: "请识别这张电梯装箱明细表照片，提取第一页送货单需要填写的信息。只输出符合 schema 的 JSON。尺寸统一为 2850*550*960 这种格式；看不清的字段留空；包装状态不用提取；每一行箱子都保留。"
+              text: "请识别这张电梯装箱明细表照片，提取第一页送货单需要填写的信息。收货单位位置请作为项目名 projectName 提取。只输出符合 schema 的 JSON。尺寸统一为 2850*550*960 这种格式；看不清的字段留空；包装状态不用提取；每一行箱子都保留。"
             },
             {
               type: "input_image",

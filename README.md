@@ -43,3 +43,15 @@ npm run dev
 - `/Users/naf/Downloads/微信图片_20260626082450_103_321.jpg`
 
 实际使用时也可以直接在页面上传新的 Excel 模版和图片。
+
+## Vercel 部署
+
+这个项目已经包含 Vercel 所需的 `api/*.py` serverless 接口和 `vercel.json`。
+
+部署到 Vercel 后需要在项目环境变量里设置：
+
+```text
+OPENAI_API_KEY=你的 key
+```
+
+线上环境没有本机 `Downloads` 里的默认 Excel 模版，所以导出前需要在页面上传 Excel 模版。

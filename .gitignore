@@ -2,3 +2,5 @@ exports/*
 tmp/*
 !exports/.gitkeep
 .DS_Store
+__pycache__/
+*.pyc

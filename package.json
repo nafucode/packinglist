@@ -1,0 +1,8 @@
+{
+  "name": "shipping-mark-tool",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs"
+  }
+}

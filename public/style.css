@@ -1,0 +1,317 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  background: #f4f5f2;
+  color: #18201b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  min-height: 76px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 28px;
+  background: #fff;
+  border-bottom: 1px solid #d9ddd5;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #697367;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+.actions,
+.table-head,
+.table-head > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+button {
+  border: 1px solid #b7c0b2;
+  background: #fff;
+  color: #18201b;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f0f4ed;
+}
+
+.primary {
+  border-color: #1d6b4f;
+  background: #1d6b4f;
+  color: #fff;
+}
+
+.primary:hover {
+  background: #16583f;
+}
+
+.secondary {
+  border-color: #3f716a;
+  color: #215c54;
+}
+
+.small {
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.workspace {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.side {
+  border-right: 1px solid #d9ddd5;
+  padding: 18px;
+  background: #fbfcfa;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.drop,
+.json-panel,
+.fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.drop {
+  border: 1px dashed #aeb8a9;
+  background: #fff;
+  border-radius: 8px;
+  padding: 13px;
+}
+
+.drop input {
+  max-width: 100%;
+}
+
+label span {
+  font-size: 12px;
+  color: #657060;
+}
+
+.drop strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.preview {
+  border: 1px solid #d9ddd5;
+  background: #fff;
+  border-radius: 8px;
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 420px;
+  object-fit: contain;
+}
+
+.json-panel {
+  min-height: 180px;
+  flex: 1;
+}
+
+textarea {
+  flex: 1;
+  min-height: 160px;
+  border: 1px solid #cfd7ca;
+  border-radius: 8px;
+  padding: 10px;
+  resize: vertical;
+  background: #fff;
+}
+
+.editor {
+  padding: 20px;
+  overflow: auto;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.fields {
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  margin-bottom: 18px;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+input {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid #cfd7ca;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #fff;
+}
+
+.table-head {
+  justify-content: space-between;
+  margin: 8px 0 10px;
+}
+
+.table-wrap {
+  border: 1px solid #d5dcd1;
+  border-radius: 8px;
+  overflow: auto;
+  background: #fff;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 1040px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e3e7df;
+  border-right: 1px solid #edf0ea;
+  padding: 7px;
+  vertical-align: middle;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eef3ea;
+  color: #384437;
+  font-size: 12px;
+  text-align: left;
+}
+
+td input {
+  width: 100%;
+  border-color: transparent;
+  background: transparent;
+  border-radius: 4px;
+}
+
+td input:focus {
+  outline: 2px solid #7ba897;
+  background: #fff;
+}
+
+td:last-child,
+th:last-child {
+  width: 44px;
+  text-align: center;
+}
+
+.remove-row {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-color: transparent;
+}
+
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  background: #18201b;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+  max-width: min(560px, calc(100vw - 28px));
+}
+
+#toast.show {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .topbar,
+  .workspace {
+    display: block;
+  }
+
+  .topbar {
+    padding: 16px;
+  }
+
+  .actions {
+    margin-top: 12px;
+  }
+
+  .side {
+    border-right: 0;
+    border-bottom: 1px solid #d9ddd5;
+  }
+
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

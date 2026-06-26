@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>唛头表工具</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Xinfuji Shipping Marks</p>
+        <h1>唛头表工具</h1>
+      </div>
+      <div class="actions">
+        <button id="extractBtn" class="secondary" type="button">识别图片</button>
+        <button id="exportBtn" class="primary" type="button">导出 Excel</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="side">
+        <label class="drop">
+          <span>Excel 模版</span>
+          <input id="templateInput" type="file" accept=".xlsx">
+          <strong id="templateName">使用默认模版</strong>
+        </label>
+
+        <label class="drop image-drop">
+          <span>装箱图片</span>
+          <input id="imageInput" type="file" accept="image/*">
+          <strong id="imageName">选择图片</strong>
+        </label>
+
+        <div class="preview">
+          <img id="previewImage" alt="">
+        </div>
+
+        <label class="json-panel">
+          <span>JSON</span>
+          <textarea id="jsonInput" spellcheck="false"></textarea>
+        </label>
+      </aside>
+
+      <section class="editor">
+        <div class="grid fields">
+          <label>
+            <span>电梯规格</span>
+            <input id="elevatorSpec" type="text">
+          </label>
+          <label>
+            <span>收货单位</span>
+            <input id="consignee" type="text">
+          </label>
+          <label class="wide">
+            <span>收货地址</span>
+            <input id="address" type="text">
+          </label>
+          <label>
+            <span>出厂编号</span>
+            <input id="factoryNumber" type="text">
+          </label>
+          <label>
+            <span>发货日期</span>
+            <input id="shipDate" type="text">
+          </label>
+          <label>
+            <span>合同号</span>
+            <input id="contractNumber" type="text">
+          </label>
+          <label>
+            <span>联系电话</span>
+            <input id="contactPhone" type="text">
+          </label>
+          <label>
+            <span>收件人</span>
+            <input id="recipient" type="text">
+          </label>
+        </div>
+
+        <div class="table-head">
+          <h2>箱子明细</h2>
+          <div>
+            <button id="addRowBtn" class="small" type="button">新增行</button>
+            <button id="syncJsonBtn" class="small" type="button">同步 JSON</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>箱号</th>
+                <th>中文箱名</th>
+                <th>英文箱名</th>
+                <th>数量</th>
+                <th>单位</th>
+                <th>尺寸</th>
+                <th>重量</th>
+                <th>备注</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <div id="toast" role="status"></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

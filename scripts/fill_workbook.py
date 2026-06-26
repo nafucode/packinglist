@@ -72,7 +72,9 @@ def compact_label_sheet_for_print(sheet) -> None:
     sheet.row_dimensions[22].height = 32
     sheet.row_dimensions[23].height = 34
     sheet.row_dimensions[24].height = 36
-    sheet.print_area = "A1:I24"
+    sheet.print_area = "A1:J24"
+    sheet.print_options.horizontalCentered = True
+    sheet.print_options.verticalCentered = True
     sheet.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
     sheet.page_setup.fitToWidth = 1
     sheet.page_setup.fitToHeight = 1

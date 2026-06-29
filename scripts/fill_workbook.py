@@ -12,6 +12,78 @@ from openpyxl.worksheet.properties import PageSetupProperties
 
 LABEL_SHEET_PATTERN = re.compile(r"^(\d+)#\(\d+\)$")
 
+BOX_NAME_TRANSLATIONS = {
+    "曳引机": "Traction Machine",
+    "控制柜箱": "Control Cabinet",
+    "控制柜": "Control Cabinet",
+    "电气部件箱": "Electric Parts",
+    "电气部件": "Electric Parts",
+    "机械部件箱": "Mechanical Parts",
+    "机械部件": "Mechanical Parts",
+    "导轨": "Guide Rail",
+    "对重块": "Counterweight",
+    "轿壁箱": "Car Wall",
+    "轿壁箱，含门板": "Car Wall",
+    "轿壁箱,含门板": "Car Wall",
+    "轿壁": "Car Wall",
+    "轿底装饰箱": "Car Bottom",
+    "轿底箱": "Car Bottom",
+    "轿底": "Car Bottom",
+    "门机层门装置": "Door Operator & Landing Door Equipment",
+    "上坎箱，含门机": "Upper Sill and Door Operator",
+    "上坎箱,含门机": "Upper Sill and Door Operator",
+    "上坎，门机": "Upper Sill and Door Operator",
+    "上坎,门机": "Upper Sill and Door Operator",
+    "上坎箱": "Upper Sill",
+    "上坎": "Upper Sill",
+    "门机": "Door Operator",
+    "层门装置": "Landing Door Equipment",
+    "直梁": "Straight Beam",
+    "直梁箱": "Straight Beam",
+    "对重架": "Counterweight Frame",
+    "搁机梁": "Motor Support Beam",
+    "吊顶箱": "Ceiling",
+    "吊顶": "Ceiling",
+    "钢丝绳": "Steel Wire Rope",
+    "支架箱": "Support Bracket",
+    "支架": "Support Bracket",
+    "铝合金框架箱": "Aluminum Alloy Frame",
+    "铝合金框架": "Aluminum Alloy Frame",
+    "框架玻璃1号箱": "Frame Glass No.1",
+    "框架玻璃一号箱": "Frame Glass No.1",
+    "框架玻璃2号箱": "Frame Glass No.2",
+    "框架玻璃二号箱": "Frame Glass No.2",
+}
+
+
+def normalize_box_name(value: str) -> str:
+    normalized = str(value or "").strip()
+    normalized = re.sub(r"[，,、；;：:\s\-_*×xX/()（）\[\]【】]", "", normalized)
+    return normalized.replace("１", "1").replace("２", "2").replace("一号", "1号").replace("二号", "2号")
+
+
+NORMALIZED_TRANSLATIONS = sorted(
+    ((normalize_box_name(key), value) for key, value in BOX_NAME_TRANSLATIONS.items()),
+    key=lambda item: len(item[0]),
+    reverse=True,
+)
+
+
+def translate_box_name(chinese_name: str) -> str:
+    normalized = normalize_box_name(chinese_name)
+    if not normalized:
+        return ""
+    exact = BOX_NAME_TRANSLATIONS.get(str(chinese_name or "").strip())
+    if exact:
+        return exact
+    for key, value in NORMALIZED_TRANSLATIONS:
+        if key == normalized:
+            return value
+    for key, value in NORMALIZED_TRANSLATIONS:
+        if key and key in normalized:
+            return value
+    return ""
+
 
 def cbm_formula(row: int) -> str:
     dimension = f'SUBSTITUTE(G{row},"×","*")'
@@ -115,6 +187,8 @@ def repair_label_formulas(workbook, items: list[dict]) -> None:
 def fill_workbook(template_path: Path, output_path: Path, data: dict) -> None:
     workbook = load_workbook(template_path)
     items = data.get("items", [])[:33]
+    for item in items:
+        item["englishName"] = item.get("englishName") or translate_box_name(item.get("chineseName", ""))
     prune_label_sheets(workbook, len(items))
 
     sheet = workbook["FJPN送货单"]

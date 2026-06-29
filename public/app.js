@@ -9,6 +9,53 @@ const fields = [
   "recipient",
 ];
 
+const boxNameTranslations = {
+  "曳引机": "Traction Machine",
+  "控制柜箱": "Control Cabinet",
+  "控制柜": "Control Cabinet",
+  "电气部件箱": "Electric Parts",
+  "电气部件": "Electric Parts",
+  "机械部件箱": "Mechanical Parts",
+  "机械部件": "Mechanical Parts",
+  "导轨": "Guide Rail",
+  "对重块": "Counterweight",
+  "轿壁箱": "Car Wall",
+  "轿壁箱，含门板": "Car Wall",
+  "轿壁箱,含门板": "Car Wall",
+  "轿壁": "Car Wall",
+  "轿底装饰箱": "Car Bottom",
+  "轿底箱": "Car Bottom",
+  "轿底": "Car Bottom",
+  "门机层门装置": "Door Operator & Landing Door Equipment",
+  "上坎箱，含门机": "Upper Sill and Door Operator",
+  "上坎箱,含门机": "Upper Sill and Door Operator",
+  "上坎，门机": "Upper Sill and Door Operator",
+  "上坎,门机": "Upper Sill and Door Operator",
+  "上坎箱": "Upper Sill",
+  "上坎": "Upper Sill",
+  "门机": "Door Operator",
+  "层门装置": "Landing Door Equipment",
+  "直梁": "Straight Beam",
+  "直梁箱": "Straight Beam",
+  "对重架": "Counterweight Frame",
+  "搁机梁": "Motor Support Beam",
+  "吊顶箱": "Ceiling",
+  "吊顶": "Ceiling",
+  "钢丝绳": "Steel Wire Rope",
+  "支架箱": "Support Bracket",
+  "支架": "Support Bracket",
+  "铝合金框架箱": "Aluminum Alloy Frame",
+  "铝合金框架": "Aluminum Alloy Frame",
+  "框架玻璃1号箱": "Frame Glass No.1",
+  "框架玻璃一号箱": "Frame Glass No.1",
+  "框架玻璃2号箱": "Frame Glass No.2",
+  "框架玻璃二号箱": "Frame Glass No.2",
+};
+
+const normalizedTranslations = Object.entries(boxNameTranslations)
+  .map(([key, value]) => [normalizeBoxName(key), value])
+  .sort((a, b) => b[0].length - a[0].length);
+
 const sampleData = {
   elevatorSpec: "TKJ 800/1.0-VF",
   projectName: "苏州欣富机机电有限公司",
@@ -19,8 +66,8 @@ const sampleData = {
   contactPhone: "",
   recipient: "",
   items: [
-    { chineseName: "轿壁箱，含门板", englishName: "Car Wall Panel and Door Panel", size: "760*560*960" },
-    { chineseName: "曳引机", englishName: "Motor", size: "760*460*700" },
+    { chineseName: "轿壁箱，含门板", englishName: "Car Wall", size: "760*560*960" },
+    { chineseName: "曳引机", englishName: "Traction Machine", size: "760*460*700" },
     { chineseName: "控制柜箱", englishName: "Control Cabinet", size: "1760*510*350" },
     { chineseName: "上坎箱，含门机", englishName: "Upper Sill and Door Operator", size: "1720*520*650" },
     { chineseName: "电气部件箱", englishName: "Electric Parts", size: "1260*760*750" },
@@ -84,6 +131,32 @@ function fileToBase64(file) {
   });
 }
 
+function normalizeBoxName(value = "") {
+  return String(value)
+    .trim()
+    .replace(/[，,、；;：:\s\-_*×xX/()（）[\]【】]/g, "")
+    .replace(/１/g, "1")
+    .replace(/２/g, "2")
+    .replace(/一号/g, "1号")
+    .replace(/二号/g, "2号");
+}
+
+function translateBoxName(chineseName = "") {
+  const normalized = normalizeBoxName(chineseName);
+  if (!normalized) return "";
+  const exact = boxNameTranslations[chineseName.trim()] || normalizedTranslations.find(([key]) => key === normalized)?.[1];
+  if (exact) return exact;
+  return normalizedTranslations.find(([key]) => normalized.includes(key))?.[1] || "";
+}
+
+function withEnglishTranslation(item = {}) {
+  const chineseName = item.chineseName || "";
+  return {
+    ...item,
+    englishName: item.englishName || translateBoxName(chineseName),
+  };
+}
+
 function readForm() {
   const data = { items: [] };
   fields.forEach((key) => {
@@ -95,7 +168,7 @@ function readForm() {
       actualBoxNo: value("actualBoxNo") || `${index + 1}#`,
       boxNo: Number(value("boxNo") || index + 1),
       chineseName: value("chineseName"),
-      englishName: value("englishName"),
+      englishName: value("englishName") || translateBoxName(value("chineseName")),
       quantity: Number(value("quantity") || 1),
       unit: value("unit") || "箱",
       size: value("size"),
@@ -120,7 +193,7 @@ function applyData(data) {
   state.data = {
     ...structuredClone(sampleData),
     ...incoming,
-    items: Array.isArray(incoming.items) ? incoming.items : [],
+    items: Array.isArray(incoming.items) ? incoming.items.map(withEnglishTranslation) : [],
   };
   fields.forEach((key) => {
     document.getElementById(key).value = state.data[key] || "";
@@ -140,16 +213,17 @@ function cellInput(key, value, type = "text") {
 
 function addRow(item = {}, index = els.itemsBody.children.length) {
   const row = document.createElement("tr");
+  const itemWithTranslation = withEnglishTranslation(item);
   row.innerHTML = `
-    <td>${cellInput("boxNo", item.boxNo || index + 1, "number")}</td>
-    <td>${cellInput("chineseName", item.chineseName || "")}</td>
-    <td>${cellInput("englishName", item.englishName || "")}</td>
-    <td>${cellInput("quantity", item.quantity || 1, "number")}</td>
-    <td>${cellInput("unit", item.unit || "箱")}</td>
-    <td>${cellInput("size", item.size || "")}</td>
-    <td>${cellInput("weight", item.weight || "/")}</td>
-    <td>${cellInput("note", item.note || "")}</td>
-    <td><button class="remove-row" type="button" title="删除">×</button>${cellInput("actualBoxNo", item.actualBoxNo || `${index + 1}#`)}</td>
+    <td>${cellInput("boxNo", itemWithTranslation.boxNo || index + 1, "number")}</td>
+    <td>${cellInput("chineseName", itemWithTranslation.chineseName || "")}</td>
+    <td>${cellInput("englishName", itemWithTranslation.englishName || "")}</td>
+    <td>${cellInput("quantity", itemWithTranslation.quantity || 1, "number")}</td>
+    <td>${cellInput("unit", itemWithTranslation.unit || "箱")}</td>
+    <td>${cellInput("size", itemWithTranslation.size || "")}</td>
+    <td>${cellInput("weight", itemWithTranslation.weight || "/")}</td>
+    <td>${cellInput("note", itemWithTranslation.note || "")}</td>
+    <td><button class="remove-row" type="button" title="删除">×</button>${cellInput("actualBoxNo", itemWithTranslation.actualBoxNo || `${index + 1}#`)}</td>
   `;
   row.querySelector('[data-key="actualBoxNo"]').hidden = true;
   row.querySelector(".remove-row").addEventListener("click", () => {
@@ -157,7 +231,15 @@ function addRow(item = {}, index = els.itemsBody.children.length) {
     readForm();
     renderJson();
   });
-  row.addEventListener("input", renderJson);
+  row.addEventListener("input", (event) => {
+    if (event.target.dataset.key === "chineseName") {
+      const englishInput = row.querySelector('[data-key="englishName"]');
+      if (!englishInput.value.trim()) {
+        englishInput.value = translateBoxName(event.target.value);
+      }
+    }
+    renderJson();
+  });
   els.itemsBody.append(row);
 }
 
